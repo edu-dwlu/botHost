@@ -22,8 +22,8 @@ from aiogram.types import (
 )
 
 # ================= CONFIGURATION =================
-MASTER_BOT_TOKEN = os.getenv("MASTER_BOT_TOKEN", "YOUR_MASTER_BOT_TOKEN")
-ADMIN_ID = int(os.getenv("ADMIN_ID", "123456789"))
+MASTER_BOT_TOKEN = os.getenv("MASTER_BOT_TOKEN", "9072057042:AAGeMqNrpOq6_Vrft4t8ot5xWW0fm3AcKZM")
+ADMIN_ID = int(os.getenv("ADMIN_ID", "6918458288"))
 
 DATA_DIR = Path("/data")
 BOTS_DIR = DATA_DIR / "bots"
