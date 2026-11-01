@@ -1,0 +1,107 @@
+name: Auto Unzip Uploaded ZIP
+
+on:
+  push:
+    paths:
+      - '**.zip'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  unzip:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Extract ZIP Files and Delete Archives
+        run: |
+          python - <<'PY'
+          import zipfile
+          import shutil
+          import stat
+          from pathlib import Path, PurePosixPath
+
+          root = Path.cwd().resolve()
+
+          zip_files = sorted(
+              p for p in root.rglob("*.zip")
+              if ".git" not in p.parts
+          )
+
+          if not zip_files:
+              print("No ZIP files found.")
+          else:
+              for archive in zip_files:
+                  print(f"Extracting: {archive.name}")
+
+                  with zipfile.ZipFile(archive, "r") as zf:
+                      for info in zf.infolist():
+
+                          if not info.filename:
+                              continue
+
+                          member = PurePosixPath(info.filename)
+
+                          # Prevent unsafe archive paths
+                          if member.is_absolute() or ".." in member.parts:
+                              raise ValueError(
+                                  f"Unsafe ZIP path: {info.filename}"
+                              )
+
+                          destination = (
+                              root / Path(*member.parts)
+                          ).resolve()
+
+                          destination.relative_to(root)
+
+                          # Reject symbolic links
+                          mode = info.external_attr >> 16
+                          if stat.S_ISLNK(mode):
+                              raise ValueError(
+                                  f"Symlink not allowed: {info.filename}"
+                              )
+
+                          if info.is_dir():
+                              destination.mkdir(
+                                  parents=True,
+                                  exist_ok=True
+                              )
+                          else:
+                              destination.parent.mkdir(
+                                  parents=True,
+                                  exist_ok=True
+                              )
+
+                              with zf.open(info) as source:
+                                  with destination.open("wb") as target:
+                                      shutil.copyfileobj(source, target)
+
+                  # Delete ZIP after successful extraction
+                  archive.unlink()
+
+                  print(f"Deleted: {archive.name}")
+
+          print("ZIP processing completed!")
+          PY
+
+      - name: Commit and Push Extracted Files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add -A
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+
+          git commit -m "Auto extract ZIP files"
+
+          git push origin "HEAD:${GITHUB_REF_NAME}"
