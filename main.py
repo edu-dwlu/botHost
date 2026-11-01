@@ -30,7 +30,7 @@ BOTS_DIR = DATA_DIR / "bots"
 DB_PATH = DATA_DIR / "platform.db"
 
 DEFAULT_MAX_BOTS_PER_USER = int(os.getenv("MAX_BOTS_PER_USER", "2"))
-MAX_RAM_PER_BOT_MB = int(os.getenv("MAX_RAM_PER_BOT_MB", "45"))
+MAX_RAM_PER_BOT_MB = int(os.getenv("MAX_RAM_PER_BOT_MB", "85"))
 MAX_DISK_PER_BOT_MB = int(os.getenv("MAX_DISK_PER_BOT_MB", "150"))
 
 # Lock directory permissions so user bots cannot snoop
